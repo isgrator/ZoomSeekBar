@@ -199,4 +199,27 @@ public class ZoomSeekBar extends View {
             return val;
         }
     }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int altoDeseado = altoNumeros + altoRegla + altoBar
+                + getPaddingBottom()
+                + getPaddingTop();
+        int alto = obtenDimension(heightMeasureSpec, altoDeseado);
+        int anchoDeseado = 2 * altoDeseado;
+        int ancho = obtenDimension(widthMeasureSpec, anchoDeseado);
+        setMeasuredDimension(ancho, alto);
+    }
+    private int obtenDimension(int measureSpec, int deseado) {
+        int dimension = MeasureSpec.getSize(measureSpec);
+        int modo = MeasureSpec.getMode(measureSpec);
+        if (modo == MeasureSpec.EXACTLY) {
+            return dimension;
+        } else if (modo == MeasureSpec.AT_MOST) {
+            return Math.min(dimension, deseado);
+        } else {
+            return deseado;
+        }
+    }
+
 }
