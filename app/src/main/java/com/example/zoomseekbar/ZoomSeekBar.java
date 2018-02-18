@@ -222,4 +222,17 @@ public class ZoomSeekBar extends View {
         }
     }
 
+    public int getVal() {
+        return val;
+    }
+
+    public void setVal(int val) {
+        if (valMin <= val && val <= valMax) {
+            this.val = val;
+            escalaMin = Math.min(escalaMin, val);
+            escalaMax = Math.max(escalaMax, val);
+            invalidate();
+        }
+    }
+
 }
