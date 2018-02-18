@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 /**
@@ -121,6 +122,81 @@ public class ZoomSeekBar extends View {
                 canvas.drawLine(x, yIni + altoBar, x, y, reglaPaint);
             }
             v += escalaRaya;
+        }
+    }
+
+    //Métodos
+    // Variables globales usadas en onTouchEvent()
+    enum Estado {
+        SIN_PULSACION, PALANCA_PULSADA, ESCALA_PULSADA, ESCALA_PULSADA_DOBLE };
+    Estado estado = Estado.SIN_PULSACION;
+    int antVal_0, antVal_1;
+
+    @Override public boolean onTouchEvent(MotionEvent event) {
+        int x_0, y_0, x_1, y_1;
+        x_0 = (int) event.getX(0);
+        y_0 = (int) event.getY(0);
+        int val_0 = escalaMin + (x_0-xIni) * (escalaMax-escalaMin) / ancho;
+        if (event.getPointerCount() > 1) {
+            x_1 = (int) event.getX(1); y_1 = (int) event.getY(1);
+        } else {
+            x_1 = x_0; y_1 = y_0;
+        }
+        int val_1 = escalaMin + (x_1 - xIni) * (escalaMax - escalaMin) / ancho;
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                if (palancaRect.contains(x_0, y_0)) {
+                    estado = Estado.PALANCA_PULSADA;
+                } else if (barRect.contains(x_0, y_0)) {
+                    if (val_0 > val) val++; else val--;
+                    invalidate(barRect);
+                } else if (escalaRect.contains(x_0, y_0)) {
+                    estado = Estado.ESCALA_PULSADA;
+                    antVal_0 = val_0;
+                }
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if (estado == Estado.ESCALA_PULSADA) {
+                    if (escalaRect.contains(x_1, y_1)) {
+
+                        antVal_1 = val_1;
+                        estado = Estado.ESCALA_PULSADA_DOBLE;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                estado = Estado.SIN_PULSACION;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                if (estado == Estado.ESCALA_PULSADA_DOBLE) {
+                    estado = Estado.ESCALA_PULSADA;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (estado == Estado.PALANCA_PULSADA) {
+                    val = ponDentroRango(val_0, escalaMin, escalaMax);
+                    invalidate(barRect);
+                }
+                if (estado == Estado.ESCALA_PULSADA_DOBLE) {
+                    escalaMin = antVal_0 + (xIni-x_0) * (antVal_0-antVal_1) / (x_0-x_1);
+                    escalaMin = ponDentroRango(escalaMin, valMin, val);
+                    escalaMax = antVal_0 + (ancho+xIni-x_0)
+                            * (antVal_0-antVal_1) / (x_0-x_1);
+                    escalaMax = ponDentroRango(escalaMax, val, valMax);
+                    invalidate();
+                }
+                break;
+        }
+        return true;
+    }
+
+    int ponDentroRango(int val, int valMin, int valMax) {
+        if (val < valMin) {
+            return valMin;
+        } else if (val > valMax) {
+            return valMax;
+        } else {
+            return val;
         }
     }
 }
